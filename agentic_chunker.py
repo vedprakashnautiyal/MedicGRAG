@@ -1,18 +1,17 @@
 from langchain_core.prompts import ChatPromptTemplate
 import uuid
-from langchain.chat_models import ChatOpenAI
 from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_groq import ChatGroq
 import os
 from typing import Optional
-from langchain_core.pydantic_v1 import BaseModel
+from pydantic import BaseModel
 from langchain.chains import create_extraction_chain_pydantic
 from dotenv import load_dotenv
 
 load_dotenv()
-openai='gpt-4o-mini'
-gemini='gemini-1.5-flash-latest'
+
 class AgenticChunker:
-    def __init__(self, openai_api_key=None):
+    def __init__(self, gemini_api_key=None):
         self.chunks = {}
         self.id_truncate_limit = 5
 
@@ -20,18 +19,13 @@ class AgenticChunker:
         self.generate_new_metadata_ind = True
         self.print_logging = True
 
-        if openai_api_key is None:
-            openai_api_key = os.getenv("GEMINI_API_KEY")
+        if gemini_api_key is None:
+            gemini_api_key = os.getenv("GROQ_API_KEY")
 
-        if openai_api_key is None:
+        if gemini_api_key is None:
             raise ValueError("API key is not provided and not found in environment variables")
 
-        # self.llm = ChatOpenAI(model='', openai_api_key=openai_api_key, temperature=0)
-        self.llm = ChatGoogleGenerativeAI(
-            model="gemini-1.5-flash",
-            google_api_key=os.getenv("GEMINI_API_KEY"),
-            temperature=0, top_p=0.85
-            )
+        self.llm = ChatGroq(model="mixtral-8x7b-32768", temperature=0)
 
     def add_propositions(self, propositions):
         for proposition in propositions:
@@ -297,10 +291,11 @@ class AgenticChunker:
         class ChunkID(BaseModel):
             """Extracting the chunk id"""
             chunk_id: Optional[str]
+            def __getitem__(self, item):
+                return getattr(self, item)
             
         # Extraction to catch-all LLM responses. This is a bandaid
-        extraction_chain = create_extraction_chain_pydantic(pydantic_schema=ChunkID, llm=self.llm)
-        # extraction_chain = self.llm.with_structured_output(schema=ChunkID)
+        extraction_chain = self.llm.with_structured_output(ChunkID)
         extraction_found = extraction_chain.invoke(chunk_found)
         if extraction_found:
             chunk_found = extraction_found[0].chunk_id
@@ -346,11 +341,10 @@ if __name__ == "__main__":
 
     ## Comment and uncomment the propositions to your hearts content
     propositions = [
-        'The month is October.',
-        'The year is 2023.',
-        "One of the most important things that I didn't understand about the world as a child was the degree to which the returns for performance are superlinear.",
-        'Teachers and coaches implicitly told us that the returns were linear.',
-        "I heard a thousand times that 'You get out what you put in.'",
+        # 'The month is October.',
+        # 'The year is 2023.',
+        "One of the most important things that I didn't understand about the world as a child was the degree to which the returns for performance are superlinear. Teachers and coaches implicitly told us that the returns were linear."
+        # "I heard a thousand times that 'You get out what you put in.'",
         # 'Teachers and coaches meant well.',
         # "The statement that 'You get out what you put in' is rarely true.",
         # "If your product is only half as good as your competitor's product, you do not get half as many customers.",

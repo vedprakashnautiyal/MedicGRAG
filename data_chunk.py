@@ -27,7 +27,7 @@ def get_propositions(text, runnable, extraction_chain):
 def run_chunk(essay):
 
     obj = hub.pull("wfh/proposal-indexing")
-    llm = ChatOpenAI(model='gpt-3.5-turbo', openai_api_key = os.getenv("OPENAI_API_KEY"))
+    llm = ChatOpenAI(model='gemini-1.5-flash', openai_api_key = os.getenv("GEMINI_API_KEY"))
 
     runnable = obj | llm
 
