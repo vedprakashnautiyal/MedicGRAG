@@ -1,0 +1,7 @@
+Question:
+Mr. John Smith, a 68-year-old retired engineer, presents with increasing forgetfulness and occasional episodes of sudden confusion and speech difficulty. His medical history includes type 2 diabetes, hypertension, and a transient ischemic attack two years ago. Neuroimaging reveals moderate vascular changes and white matter lesions, while his PET scan shows patchy decreased glucose metabolism. Given these symptoms and findings, which of the following is the most likely diagnosis?
+Options:
+A. Alzheimer's Disease
+B. Vascular Dementia
+C. Frontotemporal Dementia
+D. Lewy Body Dementia

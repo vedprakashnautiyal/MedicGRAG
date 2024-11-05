@@ -1,5 +1,8 @@
 import os
 from getpass import getpass
+from camel.models import ModelFactory
+from camel.types import ModelPlatformType, ModelType
+from camel.configs import OllamaConfig
 from camel.storages import Neo4jGraph
 from camel.agents import KnowledgeGraphAgent
 from camel.loaders import UnstructuredIO
@@ -10,10 +13,13 @@ from utils import *
 
 
 def creat_metagraph(args, content, gid, n4j):
-
+    llama = ModelFactory.create( model_platform=ModelPlatformType.OLLAMA,
+                                model_type="llama3.2:1b",
+                                model_config_dict={"temperature": 0.4, "max_tokens":500},
+                                )
     # Set instance
     uio = UnstructuredIO()
-    kg_agent = KnowledgeGraphAgent()
+    kg_agent = KnowledgeGraphAgent(model=llama)
     whole_chunk = content
 
     if args.grained_chunk == True:

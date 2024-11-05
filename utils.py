@@ -1,36 +1,40 @@
-from openai import OpenAI
+# from openai import OpenAI
+from langchain_ollama import ChatOllama
+from langchain_ollama import OllamaEmbeddings
+from langchain_core.messages import SystemMessage, HumanMessage
 import os
 from neo4j import GraphDatabase
 import numpy as np
 from camel.storages import Neo4jGraph
 import uuid
 from summerize import process_chunks
-import openai
+# import openai
 
 sys_prompt_one = """
 Please answer the question using insights supported by provided graph-based data relevant to medical information.
 """
 
 sys_prompt_two = """
-Modify the response to the question using the provided references. 
-Include precise citations relevant to your answer. 
-You may use multiple citations simultaneously, denoting each with the reference index number. 
-For example, cite the first and third documents as [1][3].
-If the references do not pertain to the response, simply provide a concise answer to the original question.
+Modify the response to the question using the provided references. Include precise citations relevant to your answer. You may use multiple citations simultaneously, denoting each with the reference index number. For example, cite the first and third documents as [1][3]. If the references do not pertain to the response, simply provide a concise answer to the original question.
 """
 
 # Add your own OpenAI API key
-openai_api_key = os.getenv("OPENAI_API_KEY")
+# openai_api_key = os.getenv("OPENAI_API_KEY")
 
-def get_embedding(text, mod = "text-embedding-3-small"):
-    client = OpenAI(api_key = os.getenv("OPENAI_API_KEY"))
+# def get_embedding(text, mod = "text-embedding-3-small"):
+#     client = OpenAI(api_key = os.getenv("OPENAI_API_KEY"))
 
-    response = client.embeddings.create(
-        input=text,
-        model=mod
-    )
+#     response = client.embeddings.create(
+#         input=text,
+#         model=mod
+#     )
+#     return response.data[0].embedding
 
-    return response.data[0].embedding
+def get_embedding(text, mod="olama-embedding-3-small"):
+    embedding_model = OllamaEmbeddings(model=mod)
+    embedding = embedding_model.embed_text(text)
+    
+    return embedding
 
 def fetch_texts(n4j):
     # Fetch the text for each node
@@ -83,19 +87,34 @@ def add_sum(n4j,content,gid):
 
     return s
 
-def call_llm(sys, user):
-    response = openai.chat.completions.create(
-        model="gpt-4-1106-preview",
-        messages=[
-            {"role": "system", "content": sys},
-            {"role": "user", "content": f" {user}"},
-        ],
-        max_tokens=500,
-        n=1,
-        stop=None,
-        temperature=0.5,
+# def call_llm(sys, user):
+#     response = openai.chat.completions.create(
+#         model="gpt-4-1106-preview",
+#         messages=[
+#             {"role": "system", "content": sys},
+#             {"role": "user", "content": f" {user}"},
+#         ],
+#         max_tokens=500,
+#         n=1,
+#         stop=None,
+#         temperature=0.5,
+#     )
+#     return response.choices[0].message.content
+
+def call_llm(sys: str, user: str) -> str:
+    llm = ChatOllama(
+        model="llama3.2:1b", 
+        temperature=0.8,
+        max_tokens=256,  
     )
-    return response.choices[0].message.content
+    
+    messages = [
+        SystemMessage(content=sys),
+        HumanMessage(content=user)
+    ]
+    
+    response = llm.invoke(messages)
+    return response.content
 
 def find_index_of_largest(nums):
     # Sorting the list while keeping track of the original indexes

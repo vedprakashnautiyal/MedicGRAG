@@ -1,11 +1,13 @@
 from langchain.output_parsers.openai_tools import JsonOutputToolsParser
+from langchain_ollama import ChatOllama
 from langchain_community.chat_models import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnableLambda
 from langchain.chains import create_extraction_chain
 from typing import Optional, List
 from langchain.chains import create_extraction_chain_pydantic
-from langchain_core.pydantic_v1 import BaseModel
+# from langchain_core.pydantic_v1 import BaseModel
+from pydantic import BaseModel
 from langchain import hub
 import os
 from dataloader import load_high
@@ -21,18 +23,23 @@ def get_propositions(text, runnable, extraction_chain):
     "input": text
     }).content
     
-    propositions = extraction_chain.run(runnable_output)[0].sentences
+    propositions = extraction_chain.invoke(runnable_output)[0].sentences
     return propositions
+    
 
 def run_chunk(essay):
 
     obj = hub.pull("wfh/proposal-indexing")
-    llm = ChatOpenAI(model='gemini-1.5-flash', openai_api_key = os.getenv("GEMINI_API_KEY"))
+    llm = ChatOllama(
+    model="llama3.2:1b",
+    temperature=0.5,
+    num_predict=500,
+)
 
     runnable = obj | llm
 
     # Extraction
-    extraction_chain = create_extraction_chain_pydantic(pydantic_schema=Sentences, llm=llm)
+    extraction_chain = llm.with_structured_output(Sentences)
 
     paragraphs = essay.split("\n\n")
 
@@ -49,5 +56,8 @@ def run_chunk(essay):
     ac.pretty_print_chunks()
     chunks = ac.get_chunks(get_type='list_of_strings')
 
-    # return chunks
     print(chunks)
+    return chunks
+
+if __name__ == "__main__":
+    run_chunk("/dataset/mimic_ex/report_0.txt")
