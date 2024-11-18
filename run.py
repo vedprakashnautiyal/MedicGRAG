@@ -18,7 +18,6 @@ from nano_graphrag._utils import compute_args_hash, wrap_embedding_func_with_att
 
 logging.basicConfig(level=logging.WARNING)
 logging.getLogger("nano-graphrag").setLevel(logging.INFO)
-
 MODEL = "llama3.2:1b"
 
 EMBEDDING_MODEL = "nomic-embed-text"

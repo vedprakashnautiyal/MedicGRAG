@@ -61,7 +61,7 @@ def call_llm_api(chunk: str, sum_prompt: str) -> str:
     """
     llm = ChatOllama(
         model="llama3.2:1b",
-        temperature=0.5,
+        temperature=0,
         max_tokens=500,  # num_predict should be max_tokens
     )
     

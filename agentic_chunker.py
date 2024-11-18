@@ -1,10 +1,9 @@
-from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.prompts import PromptTemplate
 import uuid
 from langchain_ollama import ChatOllama
 import os
 from typing import Optional
 from pydantic import BaseModel
-from langchain.chains import create_extraction_chain_pydantic
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -67,12 +66,9 @@ class AgenticChunker:
         """
         If you add a new proposition to a chunk, you may want to update the summary or else they could get stale
         """
-        PROMPT = ChatPromptTemplate.from_messages(
-            [
-                (
-                    "system",
-                    """
-                    You are the steward of a group of chunks which represent groups of sentences that talk about a similar topic
+        Template ="""
+                <|begin_of_text|><|start_header_id|>system<|end_header_id|>
+                '''You are the steward of a group of chunks which represent groups of sentences that talk about a similar topic
                     A new proposition was just added to one of your chunks, you should generate a very brief 1-sentence summary which will inform viewers what a chunk group is about.
 
                     A good summary will say what the chunk is about, and give any clarifying instructions on what to add to the chunk.
@@ -86,12 +82,11 @@ class AgenticChunker:
                     Input: Proposition: Greg likes to eat pizza
                     Output: This chunk contains information about the types of food Greg likes to eat.
 
-                    Only respond with the chunk new summary, nothing else.
-                    """,
-                ),
-                ("user", "Chunk's propositions:\n{proposition}\n\nCurrent chunk summary:\n{current_summary}"),
-            ]
-        )
+                    Only respond with the chunk new summary, nothing else.'''
+                <|eot_id|><|start_header_id|>user<|end_header_id|>
+                '''Chunk's propositions:\n{proposition}\n\nCurrent chunk summary:\n{current_summary}'''
+""" 
+        PROMPT = PromptTemplate.from_template(Template)
 
         runnable = PROMPT | self.llm
 
@@ -106,12 +101,9 @@ class AgenticChunker:
         """
         If you add a new proposition to a chunk, you may want to update the title or else it can get stale
         """
-        PROMPT = ChatPromptTemplate.from_messages(
-            [
-                (
-                    "system",
-                    """
-                    You are the steward of a group of chunks which represent groups of sentences that talk about a similar topic
+        Template = """
+                <|begin_of_text|><|start_header_id|>system<|end_header_id|>
+                ''' You are the steward of a group of chunks which represent groups of sentences that talk about a similar topic
                     A new proposition was just added to one of your chunks, you should generate a very brief updated chunk title which will inform viewers what a chunk group is about.
 
                     A good title will say what the chunk is about.
@@ -125,12 +117,12 @@ class AgenticChunker:
                     Input: Summary: This chunk is about dates and times that the author talks about
                     Output: Date & Times
 
-                    Only respond with the new chunk title, nothing else.
-                    """,
-                ),
-                ("user", "Chunk's propositions:\n{proposition}\n\nChunk summary:\n{current_summary}\n\nCurrent chunk title:\n{current_title}"),
-            ]
-        )
+                    Only respond with the new chunk title, nothing else.'''
+                <|eot_id|><|start_header_id|>user<|end_header_id|>
+                    '''Chunk's propositions:\n{proposition}\n\nChunk summary:\n{current_summary}\n\nCurrent chunk title:\n{current_title}'''
+                <|eot_id|><|start_header_id|>assistant<|end_header_id|>
+"""
+        PROMPT = PromptTemplate.from_template(Template)
 
         runnable = PROMPT | self.llm
 
@@ -143,12 +135,9 @@ class AgenticChunker:
         return updated_chunk_title
 
     def _get_new_chunk_summary(self, proposition):
-        PROMPT = ChatPromptTemplate.from_messages(
-            [
-                (
-                    "system",
-                    """
-                    You are the steward of a group of chunks which represent groups of sentences that talk about a similar topic
+        Template = """
+                <|begin_of_text|><|start_header_id|>system<|end_header_id|>
+                '''You are the steward of a group of chunks which represent groups of sentences that talk about a similar topic
                     You should generate a very brief 1-sentence summary which will inform viewers what a chunk group is about.
 
                     A good summary will say what the chunk is about, and give any clarifying instructions on what to add to the chunk.
@@ -162,12 +151,13 @@ class AgenticChunker:
                     Input: Proposition: Greg likes to eat pizza
                     Output: This chunk contains information about the types of food Greg likes to eat.
 
-                    Only respond with the new chunk summary, nothing else.
-                    """,
-                ),
-                ("user", "Determine the summary of the new chunk that this proposition will go into:\n{proposition}"),
-            ]
-        )
+                    Only respond with the new chunk summary, nothing else. '''
+                <|eot_id|><|start_header_id|>user<|end_header_id|>
+                    '''Determine the summary of the new chunk that this proposition will go into:\n{proposition}'''
+                <|eot_id|><|start_header_id|>assistant<|end_header_id|>
+
+"""
+        PROMPT = PromptTemplate.from_template(Template)
 
         runnable = PROMPT | self.llm
 
@@ -178,31 +168,28 @@ class AgenticChunker:
         return new_chunk_summary
     
     def _get_new_chunk_title(self, summary):
-        PROMPT = ChatPromptTemplate.from_messages(
-            [
-                (
-                    "system",
-                    """
-                    You are the steward of a group of chunks which represent groups of sentences that talk about a similar topic
-                    You should generate a very brief few word chunk title which will inform viewers what a chunk group is about.
+        Template = """
+                <|begin_of_text|><|start_header_id|>system<|end_header_id|>
+                '''You are the steward of a group of chunks which represent groups of sentences that talk about a similar topic
+                You should generate a very brief few word chunk title which will inform viewers what a chunk group is about.
 
-                    A good chunk title is brief but encompasses what the chunk is about
+                A good chunk title is brief but encompasses what the chunk is about
 
-                    You will be given a summary of a chunk which needs a title
+                You will be given a summary of a chunk which needs a title
 
-                    Your titles should anticipate generalization. If you get a proposition about apples, generalize it to food.
-                    Or month, generalize it to "date and times".
+                Your titles should anticipate generalization. If you get a proposition about apples, generalize it to food.
+                Or month, generalize it to "date and times".
 
-                    Example:
-                    Input: Summary: This chunk is about dates and times that the author talks about
-                    Output: Date & Times
+                Example:
+                Input: Summary: This chunk is about dates and times that the author talks about
+                Output: Date & Times
 
-                    Only respond with the new chunk title, nothing else.
-                    """,
-                ),
-                ("user", "Determine the title of the chunk that this summary belongs to:\n{summary}"),
-            ]
-        )
+                Only respond with the new chunk title, nothing else.'''
+                <|eot_id|><|start_header_id|>user<|end_header_id|>
+                '''Determine the title of the chunk that this summary belongs to:\n{summary}'''
+                <|eot_id|><|start_header_id|>assistant<|end_header_id|>
+"""             
+        PROMPT = PromptTemplate.from_template(Template)
 
         runnable = PROMPT | self.llm
 
@@ -245,12 +232,9 @@ class AgenticChunker:
     def _find_relevant_chunk(self, proposition):
         current_chunk_outline = self.get_chunk_outline()
 
-        PROMPT = ChatPromptTemplate.from_messages(
-            [
-                (
-                    "system",
-                    """
-                    Determine whether or not the "Proposition" should belong to any of the existing chunks.
+        Template = """
+                <|begin_of_text|><|start_header_id|>system<|end_header_id|>
+                '''Determine whether or not the "Proposition" should belong to any of the existing chunks.
 
                     A proposition should belong to a chunk of their meaning, direction, or intention are similar.
                     The goal is to group similar propositions and chunks.
@@ -269,13 +253,13 @@ class AgenticChunker:
                             - Chunk ID: 93833k
                             - Chunk Name: Food Greg likes
                             - Chunk Summary: Lists of the food and dishes that Greg likes
-                    Output: 93833k
-                    """,
-                ),
-                ("user", "Current Chunks:\n--Start of current chunks--\n{current_chunk_outline}\n--End of current chunks--"),
-                ("user", "Determine if the following statement should belong to one of the chunks outlined:\n{proposition}"),
-            ]
-        )
+                    Output: 93833k '''
+                    <|eot_id|><|start_header_id|>user<|end_header_id|>
+                    '''Current Chunks:\n--Start of current chunks--\n{current_chunk_outline}\n--End of current chunks--'''
+                    '''Determine if the following statement should belong to one of the chunks outlined:\n{proposition}'''
+                    <|eot_id|><|start_header_id|>assistant<|end_header_id|>
+"""
+        PROMPT = PromptTemplate.from_template(Template)
 
         runnable = PROMPT | self.llm
 
@@ -284,18 +268,18 @@ class AgenticChunker:
             "current_chunk_outline": current_chunk_outline
         }).content
 
+        print("This is chunk :"+chunk_found)
+
         # Pydantic data class
         class ChunkID(BaseModel):
             """Extracting the chunk id"""
             chunk_id: Optional[str]
-            def __getitem__(self, item):
-                return getattr(self, item)
             
         # Extraction to catch-all LLM responses. This is a bandaid
         extraction_chain = self.llm.with_structured_output(ChunkID)
         extraction_found = extraction_chain.invoke(chunk_found)
         if extraction_found:
-            chunk_found = extraction_found[0].chunk_id
+            chunk_found = extraction_found.chunk_id
 
         # If you got a response that isn't the chunk id limit, chances are it's a bad response or it found nothing
         # So return nothing
@@ -357,7 +341,7 @@ if __name__ == "__main__":
         'The same pattern of superlinear returns is observed in military victories.',
         'The same pattern of superlinear returns is observed in knowledge.',
         'The same pattern of superlinear returns is observed in benefit to humanity.',
-        # 'In fame, power, military victories, knowledge, and benefit to humanity, the rich get richer.'
+        'In fame, power, military victories, knowledge, and benefit to humanity, the rich get richer.'
     ]
     
     ac.add_propositions(propositions)

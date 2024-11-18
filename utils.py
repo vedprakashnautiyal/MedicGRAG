@@ -4,6 +4,7 @@ from langchain_ollama import OllamaEmbeddings
 from langchain_core.messages import SystemMessage, HumanMessage
 import os
 from neo4j import GraphDatabase
+import neo4j
 import numpy as np
 from camel.storages import Neo4jGraph
 import uuid
@@ -17,18 +18,6 @@ Please answer the question using insights supported by provided graph-based data
 sys_prompt_two = """
 Modify the response to the question using the provided references. Include precise citations relevant to your answer. You may use multiple citations simultaneously, denoting each with the reference index number. For example, cite the first and third documents as [1][3]. If the references do not pertain to the response, simply provide a concise answer to the original question.
 """
-
-# Add your own OpenAI API key
-# openai_api_key = os.getenv("OPENAI_API_KEY")
-
-# def get_embedding(text, mod = "text-embedding-3-small"):
-#     client = OpenAI(api_key = os.getenv("OPENAI_API_KEY"))
-
-#     response = client.embeddings.create(
-#         input=text,
-#         model=mod
-#     )
-#     return response.data[0].embedding
 
 def get_embedding(text, mod="olama-embedding-3-small"):
     embedding_model = OllamaEmbeddings(model=mod)
@@ -218,6 +207,43 @@ def merge_similar_nodes(n4j, gid):
         """
         result = n4j.query(merge_query)
     return result
+
+# def merge_similar_nodes(n4j, gid):
+#     if gid:
+#         merge_query = """
+#             WITH 0.5 AS threshold
+#             MATCH (n), (m)
+#             WHERE NOT n:Summary AND NOT m:Summary AND n.gid = m.gid AND n.gid = $gid AND n<>m AND apoc.coll.sort(labels(n)) = apoc.coll.sort(labels(m))
+#             WITH n, m,
+#                 reduce(dot = 0.0, i in range(0, size(n.embedding)-1) | dot + n.embedding[i] * m.embedding[i]) /
+#                 (sqrt(reduce(n_norm = 0.0, i in range(0, size(n.embedding)-1) | n_norm + n.embedding[i] * n.embedding[i])) *
+#                 sqrt(reduce(m_norm = 0.0, i in range(0, size(m.embedding)-1) | m_norm + m.embedding[i] * m.embedding[i])))
+#                 AS similarity
+#             WHERE similarity > threshold
+#             WITH head(collect([n,m])) as nodes
+#             CALL apoc.refactor.mergeNodes(nodes, {properties: 'overwrite', mergeRels: true})
+#             YIELD node
+#             RETURN count(*)
+#         """
+#         result = n4j.query(merge_query, {'gid': gid})
+#     else:
+#         merge_query = """
+#             WITH 0.5 AS threshold
+#             MATCH (n), (m)
+#             WHERE NOT n:Summary AND NOT m:Summary AND n<>m AND apoc.coll.sort(labels(n)) = apoc.coll.sort(labels(m))
+#             WITH n, m,
+#                 reduce(dot = 0.0, i in range(0, size(n.embedding)-1) | dot + n.embedding[i] * m.embedding[i]) /
+#                 (sqrt(reduce(n_norm = 0.0, i in range(0, size(n.embedding)-1) | n_norm + n.embedding[i] * n.embedding[i])) *
+#                 sqrt(reduce(m_norm = 0.0, i in range(0, size(m.embedding)-1) | m_norm + m.embedding[i] * m.embedding[i])))
+#                 AS similarity
+#             WHERE similarity > threshold
+#             WITH head(collect([n,m])) as nodes
+#             CALL apoc.refactor.mergeNodes(nodes, {properties: 'overwrite', mergeRels: true})
+#             YIELD node
+#             RETURN count(*)
+#         """
+#         result = n4j.query(merge_query)
+#     return result
 
 def ref_link(n4j, gid1, gid2):
     trinity_query = """
