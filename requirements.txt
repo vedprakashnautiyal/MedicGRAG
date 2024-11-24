@@ -1,9 +1,7 @@
-# langchain-core
 langchain
 langchain_community
 langchain-ollama
 ollama
 camel-ai
-# 'camel-ai[all]'
-hnswlib
 nano-graphrag
+# 'camel-ai[all]'

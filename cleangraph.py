@@ -37,7 +37,8 @@ class Neo4jConnection:
 
 def main():
 
-    load_dotenv()
+    # load_dotenv()
+    load_dotenv(override=True)
     uri = os.getenv("NEO4J_URL")
     user = os.getenv("NEO4J_USERNAME")
     pwd = os.getenv("NEO4J_PASSWORD")
@@ -47,7 +48,7 @@ def main():
         conn = Neo4jConnection(uri, user, pwd)
         
         # Execute query
-        result = conn.query("MATCH (n) RETURN n LIMIT 5")
+        result = conn.query("MATCH (n) RETURN n LIMIT 1")
         
         # Process results
         for record in result:

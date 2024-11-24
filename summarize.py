@@ -1,5 +1,3 @@
-# import openai
-# import tiktoken
 from concurrent.futures import ThreadPoolExecutor
 from langchain_ollama import ChatOllama
 from langchain_core.messages import HumanMessage, SystemMessage
@@ -32,22 +30,6 @@ SUBSTANCE_ABUSE: Note any substance abuse mentioned.
 Each category should be addressed only if relevant to the content of the medical source. Ensure the summary is clear and direct, suitable for quick reference.
 """
 
-# Openai API call
-# openai_api_key = os.getenv("OPENAI_API_KEY")
-# def call_openai_api(chunk):
-#     response = openai.chat.completions.create(
-#         model="gpt-4-1106-preview",
-#         messages=[
-#             {"role": "system", "content": sum_prompt},
-#             {"role": "user", "content": f" {chunk}"},
-#         ],
-#         max_tokens=500,
-#         n=1,
-#         stop=None,
-#         temperature=0.5,
-#     )
-#     return response.choices[0].message.content
-
 def call_llm_api(chunk: str, sum_prompt: str) -> str:
     """
     Call the Ollama API with a system prompt and user content.
@@ -73,16 +55,6 @@ def call_llm_api(chunk: str, sum_prompt: str) -> str:
     response = llm.invoke(messages)
     return response.content
 
-# # Tiktoken doesn't work for llama based models
-# def split_into_chunks(text, tokens=500):
-#     encoding = tiktoken.encoding_for_model('gpt-4-1106-preview')
-#     words = encoding.encode(text)
-#     chunks = []
-#     for i in range(0, len(words), tokens):
-#         chunks.append(' '.join(encoding.decode(words[i:i + tokens])))
-#     return chunks   
-
-
 # Modify `split_into_chunks` without relying on tiktoken
 def split_into_chunks(text, tokens=500):
     # Estimate chunk size in words, assuming average token-to-word ratio
@@ -107,9 +79,5 @@ def process_chunks(content):
         responses = list(executor.map(call_api_with_prompt, chunks))
     print(responses)
     return responses
-
-if __name__ == "__main__":
-    content = "Medical Report"
-    process_chunks(content)
 
 # Can take up to a few minutes to run depending on the size of your data input

@@ -30,7 +30,7 @@ def creat_metagraph(args, content, gid, n4j):
         element_example = uio.create_element_from_text(text=cont)
 
         ans_str = kg_agent.run(element_example, parse_graph_elements=False)
-        # print(ans_str)
+        print(ans_str)
 
         graph_elements = kg_agent.run(element_example, parse_graph_elements=True)
         graph_elements = add_ge_emb(graph_elements)

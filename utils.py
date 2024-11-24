@@ -1,4 +1,3 @@
-# from openai import OpenAI
 from langchain_ollama import ChatOllama
 from langchain_ollama import OllamaEmbeddings
 from langchain_core.messages import SystemMessage, HumanMessage
@@ -8,8 +7,7 @@ import neo4j
 import numpy as np
 from camel.storages import Neo4jGraph
 import uuid
-from summerize import process_chunks
-# import openai
+from summarize import process_chunks
 
 sys_prompt_one = """
 Please answer the question using insights supported by provided graph-based data relevant to medical information.
@@ -76,24 +74,10 @@ def add_sum(n4j,content,gid):
 
     return s
 
-# def call_llm(sys, user):
-#     response = openai.chat.completions.create(
-#         model="gpt-4-1106-preview",
-#         messages=[
-#             {"role": "system", "content": sys},
-#             {"role": "user", "content": f" {user}"},
-#         ],
-#         max_tokens=500,
-#         n=1,
-#         stop=None,
-#         temperature=0.5,
-#     )
-#     return response.choices[0].message.content
-
 def call_llm(sys: str, user: str) -> str:
     llm = ChatOllama(
         model="llama3.2:1b", 
-        temperature=0.8,
+        temperature=0.4,
         max_tokens=256,  
     )
     
@@ -110,6 +94,7 @@ def find_index_of_largest(nums):
     sorted_with_index = sorted((num, index) for index, num in enumerate(nums))
     
     # Extracting the original index of the largest element
+    print(len(sorted_with_index))
     largest_original_index = sorted_with_index[-1][1]
     
     return largest_original_index
@@ -207,43 +192,6 @@ def merge_similar_nodes(n4j, gid):
         """
         result = n4j.query(merge_query)
     return result
-
-# def merge_similar_nodes(n4j, gid):
-#     if gid:
-#         merge_query = """
-#             WITH 0.5 AS threshold
-#             MATCH (n), (m)
-#             WHERE NOT n:Summary AND NOT m:Summary AND n.gid = m.gid AND n.gid = $gid AND n<>m AND apoc.coll.sort(labels(n)) = apoc.coll.sort(labels(m))
-#             WITH n, m,
-#                 reduce(dot = 0.0, i in range(0, size(n.embedding)-1) | dot + n.embedding[i] * m.embedding[i]) /
-#                 (sqrt(reduce(n_norm = 0.0, i in range(0, size(n.embedding)-1) | n_norm + n.embedding[i] * n.embedding[i])) *
-#                 sqrt(reduce(m_norm = 0.0, i in range(0, size(m.embedding)-1) | m_norm + m.embedding[i] * m.embedding[i])))
-#                 AS similarity
-#             WHERE similarity > threshold
-#             WITH head(collect([n,m])) as nodes
-#             CALL apoc.refactor.mergeNodes(nodes, {properties: 'overwrite', mergeRels: true})
-#             YIELD node
-#             RETURN count(*)
-#         """
-#         result = n4j.query(merge_query, {'gid': gid})
-#     else:
-#         merge_query = """
-#             WITH 0.5 AS threshold
-#             MATCH (n), (m)
-#             WHERE NOT n:Summary AND NOT m:Summary AND n<>m AND apoc.coll.sort(labels(n)) = apoc.coll.sort(labels(m))
-#             WITH n, m,
-#                 reduce(dot = 0.0, i in range(0, size(n.embedding)-1) | dot + n.embedding[i] * m.embedding[i]) /
-#                 (sqrt(reduce(n_norm = 0.0, i in range(0, size(n.embedding)-1) | n_norm + n.embedding[i] * n.embedding[i])) *
-#                 sqrt(reduce(m_norm = 0.0, i in range(0, size(m.embedding)-1) | m_norm + m.embedding[i] * m.embedding[i])))
-#                 AS similarity
-#             WHERE similarity > threshold
-#             WITH head(collect([n,m])) as nodes
-#             CALL apoc.refactor.mergeNodes(nodes, {properties: 'overwrite', mergeRels: true})
-#             YIELD node
-#             RETURN count(*)
-#         """
-#         result = n4j.query(merge_query)
-#     return result
 
 def ref_link(n4j, gid1, gid2):
     trinity_query = """

@@ -35,7 +35,6 @@ def seq_ret(n4j, sumq):
             rating_list.append(-1)
 
     ind = find_index_of_largest(rating_list)
-    # print('ind is', ind)
 
     gid = gids[ind]
 

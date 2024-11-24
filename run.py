@@ -76,10 +76,84 @@ async def ollama_embedding(texts: list[str]) -> np.ndarray:
     return embed_text
 
 
-WORKING_DIR = "./nano_graphrag_cache_ollama_TEST"
+# WORKING_DIR = "./nano_graphrag_cache_ollama_TEST"
 
-BASE_DATA_DIR = "./dataset"
-MIMIC_DATA_DIR = os.path.join(BASE_DATA_DIR, "mimic_ex")
+# BASE_DATA_DIR = "./dataset"
+# MIMIC_DATA_DIR = os.path.join(BASE_DATA_DIR, "mimic_ex")
+
+# # %% set up parser
+# parser = argparse.ArgumentParser()
+# parser.add_argument('-simple', action='store_true')
+# parser.add_argument('-construct_graph', action='store_true')
+# parser.add_argument('-inference',  action='store_true')
+# parser.add_argument('-grained_chunk',  action='store_true')
+# parser.add_argument('-trinity', action='store_true')
+# parser.add_argument('-trinity_gid1', type=str)
+# parser.add_argument('-trinity_gid2', type=str)
+# parser.add_argument('-ingraphmerge',  action='store_true')
+# parser.add_argument('-crossgraphmerge', action='store_true')
+# parser.add_argument('-dataset', type=str, default='mimic_ex')
+# # parser.add_argument('-data_path', type=str, default='./dataset')
+# # parser.add_argument('-test_data_path', type=str, default='./dataset/mimic_ex/report_0.txt')
+# parser.add_argument('-data_path', type=str, default=BASE_DATA_DIR)
+# parser.add_argument('-test_data_path', type=str, default=os.path.join(MIMIC_DATA_DIR, 'report_0.txt'))
+# args = parser.parse_args()
+
+# if args.simple:
+#     graph_func = GraphRAG(
+#         working_dir=WORKING_DIR,
+#         best_model_func=ollama_model_if_cache,
+#         cheap_model_func=ollama_model_if_cache,
+#         embedding_func=ollama_embedding,
+#     )
+
+#     # with open("./dataset/mimic_ex/report_0.txt") as f:
+#     #     graph_func.insert(f.read())
+#     with open(args.test_data_path) as f:
+#         graph_func.insert(f.read())
+
+#     # Perform local graphrag search (I think is better and more scalable one)
+#     print(graph_func.query("What is the main symptom of the patient?", param=QueryParam(mode="local")))
+
+# else:
+
+#     url=os.getenv("NEO4J_URL")
+#     username=os.getenv("NEO4J_USERNAME")
+#     password=os.getenv("NEO4J_PASSWORD")
+
+#     # Set Neo4j instance
+#     n4j = Neo4jGraph(
+#         url=url,
+#         username=username,      
+#         password=password    
+#     )
+
+#     if args.construct_graph: 
+#         if args.dataset == 'mimic_ex':
+#             files = [file for file in os.listdir(args.data_path) if os.path.isfile(os.path.join(args.data_path, file))]
+            
+#             # Read and print the contents of each file
+#             for file_name in files:
+#                 file_path = os.path.join(args.data_path, file_name)
+#                 content = load_high(file_path)
+#                 gid = str_uuid()
+#                 n4j = creat_metagraph(args, content, gid, n4j)
+
+#                 if args.trinity:
+#                     link_context(n4j, args.trinity_gid1)
+#             if args.crossgraphmerge:
+#                 merge_similar_nodes(n4j, None)
+
+#     if args.inference:
+#         question = load_high("./prompt.txt")
+#         sum = process_chunks(question)
+#         gid = seq_ret(n4j, sum)
+#         response = get_response(n4j, gid, question)
+#         print(response)
+
+
+
+
 
 # %% set up parser
 parser = argparse.ArgumentParser()
@@ -93,23 +167,21 @@ parser.add_argument('-trinity_gid2', type=str)
 parser.add_argument('-ingraphmerge',  action='store_true')
 parser.add_argument('-crossgraphmerge', action='store_true')
 parser.add_argument('-dataset', type=str, default='mimic_ex')
-# parser.add_argument('-data_path', type=str, default='./dataset')
-# parser.add_argument('-test_data_path', type=str, default='./dataset/mimic_ex/report_0.txt')
-parser.add_argument('-data_path', type=str, default=BASE_DATA_DIR)
-parser.add_argument('-test_data_path', type=str, default=os.path.join(MIMIC_DATA_DIR, 'report_0.txt'))
+parser.add_argument('-data_path', type=str, default='./dataset/mimic_ex/')
+# parser.add_argument('-data_path', type=str, default='./dataset_test')
+parser.add_argument('-test_data_path', type=str, default='./dataset_ex/report_0.txt')
 args = parser.parse_args()
 
 if args.simple:
+    # graph_func = GraphRAG(working_dir="./nanotest")
     graph_func = GraphRAG(
-        working_dir=WORKING_DIR,
+        working_dir="./nano",
         best_model_func=ollama_model_if_cache,
         cheap_model_func=ollama_model_if_cache,
         embedding_func=ollama_embedding,
     )
 
-    # with open("./dataset/mimic_ex/report_0.txt") as f:
-    #     graph_func.insert(f.read())
-    with open(args.test_data_path) as f:
+    with open("./dataset/mimic_ex/report_0.txt") as f:
         graph_func.insert(f.read())
 
     # Perform local graphrag search (I think is better and more scalable one)
@@ -124,8 +196,8 @@ else:
     # Set Neo4j instance
     n4j = Neo4jGraph(
         url=url,
-        username=username,      
-        password=password    
+        username=username,             # Default username
+        password=password     # Replace 'yourpassword' with your actual password
     )
 
     if args.construct_graph: 
@@ -146,7 +218,9 @@ else:
 
     if args.inference:
         question = load_high("./prompt.txt")
+        print(question)
         sum = process_chunks(question)
+        print(sum)
         gid = seq_ret(n4j, sum)
         response = get_response(n4j, gid, question)
         print(response)
