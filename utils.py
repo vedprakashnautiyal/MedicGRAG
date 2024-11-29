@@ -17,9 +17,9 @@ sys_prompt_two = """
 Modify the response to the question using the provided references. Include precise citations relevant to your answer. You may use multiple citations simultaneously, denoting each with the reference index number. For example, cite the first and third documents as [1][3]. If the references do not pertain to the response, simply provide a concise answer to the original question.
 """
 
-def get_embedding(text, mod="olama-embedding-3-small"):
+def get_embedding(text, mod="nomic-embed-text"):
     embedding_model = OllamaEmbeddings(model=mod)
-    embedding = embedding_model.embed_text(text)
+    embedding = embedding_model.embed_query(text)
     
     return embedding
 

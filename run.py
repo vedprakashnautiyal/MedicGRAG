@@ -3,8 +3,6 @@ import logging
 import ollama
 from getpass import getpass
 from camel.storages import Neo4jGraph
-from camel.agents import KnowledgeGraphAgent
-from camel.loaders import UnstructuredIO
 from dataloader import load_high
 import argparse
 from data_chunk import run_chunk
@@ -18,7 +16,9 @@ from nano_graphrag._utils import compute_args_hash, wrap_embedding_func_with_att
 
 logging.basicConfig(level=logging.WARNING)
 logging.getLogger("nano-graphrag").setLevel(logging.INFO)
-MODEL = "llama3.2:1b"
+# MODEL = "llama3.2:1b"
+# MODEL = "thewindmom/llama3-med42-8b"
+MODEL = "llama3.2:ctx32k"
 
 EMBEDDING_MODEL = "nomic-embed-text"
 EMBEDDING_MODEL_DIM = 768
@@ -89,24 +89,29 @@ parser.add_argument('-ingraphmerge',  action='store_true')
 parser.add_argument('-crossgraphmerge', action='store_true')
 parser.add_argument('-dataset', type=str, default='mimic_ex')
 parser.add_argument('-data_path', type=str, default='./dataset/mimic_ex/')
-# parser.add_argument('-data_path', type=str, default='./dataset_test')
 parser.add_argument('-test_data_path', type=str, default='./dataset_ex/report_0.txt')
 args = parser.parse_args()
 
 if args.simple:
-    # graph_func = GraphRAG(working_dir="./nanotest")
+    WORKING_DIR = "./nano"
     graph_func = GraphRAG(
-        working_dir="./nano",
+        working_dir=WORKING_DIR,
+        enable_llm_cache=True,
         best_model_func=ollama_model_if_cache,
         cheap_model_func=ollama_model_if_cache,
         embedding_func=ollama_embedding,
     )
+    remove_if_exist(f"{WORKING_DIR}/vdb_entities.json")
+    remove_if_exist(f"{WORKING_DIR}/kv_store_full_docs.json")
+    remove_if_exist(f"{WORKING_DIR}/kv_store_text_chunks.json")
+    remove_if_exist(f"{WORKING_DIR}/kv_store_community_reports.json")
+    remove_if_exist(f"{WORKING_DIR}/graph_chunk_entity_relation.graphml")
 
     with open("./dataset/mimic_ex/report_0.txt") as f:
         graph_func.insert(f.read())
 
-    # Perform local graphrag search (I think is better and more scalable one)
-    print(graph_func.query("What is the main symptom of the patient?", param=QueryParam(mode="local")))
+    # Perform local graphrag search
+    print(graph_func.query("State the allergies of the patients.", param=QueryParam(mode="local")))
 
 else:
 

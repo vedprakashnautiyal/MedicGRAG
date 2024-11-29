@@ -1,18 +1,16 @@
 from langchain.output_parsers.openai_tools import JsonOutputToolsParser
 from langchain_ollama import ChatOllama
-from langchain_core.prompts import ChatPromptTemplate, PromptTemplate
-from langchain_core.runnables import RunnableLambda
-from langchain.chains import create_extraction_chain
+from langchain_core.prompts import PromptTemplate
 from typing import Optional, List
 from pydantic import BaseModel
-from langchain import hub
 import os
 from dataloader import load_high
 from agentic_chunker import AgenticChunker
 
 # Pydantic data class
 class Sentences(BaseModel):
-    sentences: str
+    sentences: List[str]
+    # sentences: str
 
 
 def get_propositions(text, runnable, extraction_chain):
