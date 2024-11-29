@@ -5,9 +5,11 @@ A medical assistant for remote areas. Build up on GraphRAG utilising doctor in t
 1. Create Virtual Environment
 ```
 python -m venv .testenv source
+```
+```
 ./.testenv/bin/activate
 ```
-2. Download [Mimic Dataset Subset](https://huggingface.co/datasets/Morson/mimic_ex) (Using ./dataset/mimic_ex/report_0.txt as RAG doc, "What are the allergies of patient?" as prompt.)
+3. Download [Mimic Dataset Subset](https://huggingface.co/datasets/Morson/mimic_ex) (Using ./dataset/mimic_ex/report_0.txt as RAG doc, "What are the allergies of patient?" as prompt.)
 ```
 python run.py -simple 
 ```
@@ -21,6 +23,8 @@ Mimic Subset Dataset Used For Now
 1. Create Virtual Environment
 ```
 python -m venv .testenv source
+```
+```
 ./.testenv/bin/activate
 ```
 2. Download Requirements
